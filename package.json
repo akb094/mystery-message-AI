@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@react-email/components": "^0.0.19",
+    "bcryptjs": "^2.4.3",
     "glob": "^10.4.2",
     "mongoose": "^8.4.3",
     "next": "14.2.4",
+    "next-auth": "^4.24.7",
     "react": "^18",
     "react-dom": "^18",
     "react-email": "^2.1.4",
@@ -20,6 +22,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

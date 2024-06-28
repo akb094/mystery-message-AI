@@ -1,13 +1,12 @@
 import OpenAI from "openai";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import { NextResponse } from "next/server";
-
-const apiKey = process.env.OPENAI_API_KEY;
+import * as os from "os";
+//import openai from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-console.log(apiKey);
 
 export const runtime = "edge";
 

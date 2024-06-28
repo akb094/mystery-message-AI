@@ -1,44 +1,40 @@
-import UserModel from "@/model/User";
-import dbConnect from "@/lib/dbConnect";
-import { Message } from "@/model/User";
+import OpenAI from "openai";
+import { OpenAIStream, StreamingTextResponse } from "ai";
+import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
-  await dbConnect();
-  const { username, content } = await request.json();
+const apiKey = process.env.OPENAI_API_KEY;
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+console.log(apiKey);
+
+export const runtime = "edge";
+
+export async function POST(req: Request) {
   try {
-    const user = await UserModel.findOne({ username }).exec();
+    const prompt =
+      "Create a list of three open-ended and engaging questions formatted as a single string. Each question should be separated by '||'. These questions are for an anonymous social messaging platform, like Qooh.me, and should be suitable for a diverse audience. Avoid personal or sensitive topics, focusing instead on universal themes that encourage friendly interaction. For example, your output should be structured like this: 'What’s a hobby you’ve recently started?||If you could have dinner with any historical figure, who would it be?||What’s a simple thing that makes you happy?'. Ensure the questions are intriguing, foster curiosity, and contribute to a positive and welcoming conversational environment.";
 
-    if (!user) {
-      return Response.json(
-        { message: "User not found", success: false },
-        { status: 404 }
-      );
-    }
+    const response = await openai.completions.create({
+      model: "gpt-3.5-turbo-instruct",
+      max_tokens: 400,
+      stream: true,
+      prompt,
+    });
 
-    // Check if the user is accepting messages
-    if (!user.isAcceptingMessages) {
-      return Response.json(
-        { message: "User is not accepting messages", success: false },
-        { status: 403 } // 403 Forbidden status
-      );
-    }
+    const stream = OpenAIStream(response);
 
-    const newMessage = { content, createdAt: new Date() };
-
-    // Push the new message to the user's messages array
-    user.messages.push(newMessage as Message);
-    await user.save();
-
-    return Response.json(
-      { message: "Message sent successfully", success: true },
-      { status: 201 }
-    );
+    return new StreamingTextResponse(stream);
   } catch (error) {
-    console.error("Error adding message:", error);
-    return Response.json(
-      { message: "Internal server error", success: false },
-      { status: 500 }
-    );
+    if (error instanceof OpenAI.APIError) {
+      // OpenAI API error handling
+      const { name, status, headers, message } = error;
+      return NextResponse.json({ name, status, headers, message }, { status });
+    } else {
+      // General error handling
+      console.error("An unexpected error occurred:", error);
+      throw error;
+    }
   }
 }
